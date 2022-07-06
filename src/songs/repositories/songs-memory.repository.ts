@@ -15,10 +15,24 @@ export class SongsMemoryRepository implements SongsRepository {
 
   async create(song: Song, userId: number) {
     const id = Date.now();
+    const songDto = new SongDto(
+      id,
+      song.title,
+      song.artist,
+      song.album,
+      song.year,
+      false,
+      userId,
+    );
 
-    this.songs.push({ id, userId, ...song });
+    this.songs.push(songDto);
 
-    return id;
+    return songDto;
+  }
+
+  async updateSongParseStatus(songId: number) {
+    const updatedSong = await this.findById(songId);
+    updatedSong.wasParsed = true;
   }
 
   resetDatabase() {

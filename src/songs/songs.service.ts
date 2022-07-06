@@ -26,14 +26,36 @@ export class SongsService {
       );
     }
 
-    const songId = await this.songsRepository.create(song, userId);
-    const songFileName = `${songId}-${filename}`;
-    await this.storageProvider.saveFile(songFileName, buffer);
+    const songDto = await this.songsRepository.create(song, userId);
+    await this.storageProvider.saveFile(songDto.getFileName(), buffer);
+
+    return songDto;
+  }
+
+  async stream(userId: number, songId: number) {
+    const song = await this.songsRepository.findById(songId);
+    if (!song) {
+      throw new DomainError(Song.name, 'song not found', 'entity not found');
+    }
+
+    if (song.userId !== userId) {
+      throw new DomainError(Song.name, 'unauthorized', 'unauthorized');
+    }
+
+    if (!song.wasParsed) {
+      throw new DomainError(
+        Song.name,
+        'song not parsed yet',
+        'invalid operation',
+      );
+    }
+
+    const filename = song.getFileName();
+    const file = await this.storageProvider.getFileAsReadable(filename);
 
     return {
-      id: songId,
-      title: song.title,
-      songFileName,
+      filename,
+      file,
     };
   }
 }

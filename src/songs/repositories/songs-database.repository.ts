@@ -23,6 +23,7 @@ export class SongsDatabaseRepository implements SongsRepository {
       data.artist,
       data.album,
       data.year,
+      data.wasParsed,
       data.userId,
     );
   }
@@ -35,6 +36,25 @@ export class SongsDatabaseRepository implements SongsRepository {
       },
     });
 
-    return id;
+    return new SongDto(
+      id,
+      song.title,
+      song.artist,
+      song.album,
+      song.year,
+      false,
+      userId,
+    );
+  }
+
+  async updateSongParseStatus(songId: number) {
+    await this.connection.song.update({
+      data: {
+        wasParsed: true,
+      },
+      where: {
+        id: songId,
+      },
+    });
   }
 }

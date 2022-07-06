@@ -7,6 +7,11 @@ export class SongDto implements Song {
     public artist: string | null,
     public album: string | null,
     public year: number | null,
+    public wasParsed: boolean,
     public userId: number,
   ) {}
+
+  getFileName() {
+    return `${this.id}-${this.title}.mp3`;
+  }
 }
