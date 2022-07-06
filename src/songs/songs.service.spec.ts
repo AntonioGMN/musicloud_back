@@ -111,7 +111,7 @@ describe('SongsService', () => {
     ).rejects.toBeInstanceOf(DomainError);
   });
 
-  // afterAll(async () => {
-  //   await storage.resetStorage();
-  // });
+  afterAll(async () => {
+    await storage.resetStorage();
+  });
 });
