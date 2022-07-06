@@ -6,7 +6,7 @@ export class FsStorageProvider implements StorageProvider {
   private uploadFolder: string;
 
   constructor() {
-    this.uploadFolder = 'tmp';
+    this.uploadFolder = 'tmp-assets';
   }
 
   ensureDirectoryExistence() {
