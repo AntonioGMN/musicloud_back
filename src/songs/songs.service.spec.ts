@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { readFileSync, writeFileSync } from 'fs';
 import { FileDto } from '../dto/file.dto';
 import { DomainError } from '../entities/domain-error';
 import { Song } from '../entities/song.entity';
@@ -71,10 +70,6 @@ describe('SongsService', () => {
 
     const song = new Song(songTitle);
     const songDto = await database.create(song, userId);
-
-    writeFileSync('text.txt', 'abc');
-    const text = readFileSync('text.txt');
-    console.log(text);
 
     await database.updateSongParseStatus(songDto.id);
     await storage.saveFile(songDto.getFileName(), buffer);
