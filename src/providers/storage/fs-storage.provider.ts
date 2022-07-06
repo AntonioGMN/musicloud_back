@@ -23,7 +23,6 @@ export class FsStorageProvider implements StorageProvider {
     this.ensureDirectoryExistence();
 
     await fs.writeFile(this.getFilePath(filename), buffer);
-    console.log('FILE WROTE ');
   }
 
   async getFile(filepath: string) {
