@@ -1,4 +1,4 @@
-import { existsSync, promises as fs } from 'fs';
+import { createReadStream, existsSync, promises as fs } from 'fs';
 import { join } from 'path';
 import { StorageProvider } from './storage.provider';
 
@@ -27,6 +27,12 @@ export class FsStorageProvider implements StorageProvider {
 
   async getFile(filepath: string) {
     return fs.readFile(filepath);
+  }
+
+  async getFileAsReadable(filename: string) {
+    const filepath = join(process.cwd(), this.uploadFolder, filename);
+
+    return createReadStream(filepath);
   }
 
   async removeFile(filepath: string): Promise<void> {

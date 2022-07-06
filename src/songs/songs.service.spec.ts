@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FileDto } from '../dto/file.dto';
 import { DomainError } from '../entities/domain-error';
+import { Song } from '../entities/song.entity';
 import { FsStorageProvider } from '../providers/storage/fs-storage.provider';
 import { StorageProvider } from '../providers/storage/storage.provider';
 import { SongsMemoryRepository } from './repositories/songs-memory.repository';
@@ -39,12 +40,12 @@ describe('SongsService', () => {
     const buffer = Buffer.from(bytes);
 
     const fileDto = new FileDto(filename, mimetype, buffer);
-    const uploadResponse = await service.upload(userId, fileDto);
+    const songDto = await service.upload(userId, fileDto);
     const songFile = await storage.getFile(
-      storage.getFilePath(uploadResponse.songFileName),
+      storage.getFilePath(songDto.getFileName()),
     );
 
-    expect(uploadResponse.title.includes('.mp3')).toBeFalsy();
+    expect(songDto.title.includes('.mp3')).toBeFalsy();
     expect(songFile.byteLength).toEqual(bytes.length);
   });
 
@@ -59,6 +60,55 @@ describe('SongsService', () => {
     await expect(() => service.upload(userId, fileDto)).rejects.toBeInstanceOf(
       DomainError,
     );
+  });
+
+  it('should stream a valid song', async () => {
+    const userId = 1;
+    const songTitle = 'mysong';
+    const bytes = [1, 2, 3];
+    const buffer = Buffer.from(bytes);
+
+    const song = new Song(songTitle);
+    const songDto = await database.create(song, userId);
+    await database.updateSongParseStatus(songDto.id);
+    await storage.saveFile(songDto.getFileName(), buffer);
+
+    const { file, filename } = await service.stream(userId, songDto.id);
+    expect(file).toBeDefined();
+    expect(filename).toEqual(songDto.getFileName());
+  });
+
+  it('should not stream a non existing song', async () => {
+    const userId = 1;
+    const nonExistingSongId = 1;
+    await expect(() =>
+      service.stream(userId, nonExistingSongId),
+    ).rejects.toBeInstanceOf(DomainError);
+  });
+
+  it('should not stream a song from another user', async () => {
+    const userId = 1;
+    const anotherUserId = 2;
+    const songTitle = 'mysong';
+
+    const song = new Song(songTitle);
+    const songDto = await database.create(song, userId);
+
+    await expect(() =>
+      service.stream(anotherUserId, songDto.id),
+    ).rejects.toBeInstanceOf(DomainError);
+  });
+
+  it('should not stream a song that was not parsed yet', async () => {
+    const userId = 1;
+    const songTitle = 'mysong';
+
+    const song = new Song(songTitle);
+    const songDto = await database.create(song, userId);
+
+    await expect(() =>
+      service.stream(userId, songDto.id),
+    ).rejects.toBeInstanceOf(DomainError);
   });
 
   afterAll(async () => {

@@ -1,9 +1,13 @@
 import {
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   Request,
+  Response,
+  StreamableFile,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -29,5 +33,26 @@ export class SongsController {
     const fileDto = new FileDto(file.originalname, file.mimetype, file.buffer);
 
     return this.songsService.upload(req.user.userId, fileDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('stream/:id')
+  async getSong(
+    @Request() req: AuthorizedRequest,
+    @Response({ passthrough: true }) res,
+    @Param('id') id: string,
+  ) {
+    const { file, filename } = await this.songsService.stream(
+      req.user.userId,
+      +id,
+    );
+
+    res.set({
+      'Content-Type': 'audio/mpeg',
+      'Accept-Ranges': 'bytes',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    });
+
+    return new StreamableFile(file);
   }
 }

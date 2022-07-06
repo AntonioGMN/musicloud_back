@@ -24,33 +24,33 @@ export class S3StorageProvider implements StorageProvider {
     this.s3Client = new S3Client(config);
   }
 
-  getFile(filepath: string): Promise<Buffer> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const response = await this.s3Client.send(
-          new GetObjectCommand({ Bucket: this.bucketName, Key: filepath }),
-        );
-        if (!(response.Body instanceof Readable)) {
-          throw new Error(
-            'something went wrong when trying to get the file from s3',
-          );
-        }
+  async getFile(filepath: string): Promise<Buffer> {
+    const readable = await this.getFileAsReadable(filepath);
 
+    return new Promise((resolve, reject) => {
+      try {
         const responseDataChunks: Buffer[] = [];
 
-        response.Body.once('error', (err) => reject(err));
-
-        response.Body.on('data', (chunk: Buffer) =>
-          responseDataChunks.push(chunk),
-        );
-
-        response.Body.once('end', () =>
-          resolve(Buffer.concat(responseDataChunks)),
-        );
+        readable.once('error', (err) => reject(err));
+        readable.on('data', (chunk: Buffer) => responseDataChunks.push(chunk));
+        readable.once('end', () => resolve(Buffer.concat(responseDataChunks)));
       } catch (err) {
         return reject(err);
       }
     });
+  }
+
+  async getFileAsReadable(filename: string) {
+    const response = await this.s3Client.send(
+      new GetObjectCommand({ Bucket: this.bucketName, Key: filename }),
+    );
+    if (!response.Body || !(response.Body instanceof Readable)) {
+      throw new Error(
+        'something went wrong when trying to get the file from s3',
+      );
+    }
+
+    return response.Body;
   }
 
   async saveFile(filename: string, buffer: Buffer) {
