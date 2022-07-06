@@ -8,6 +8,28 @@ import { SongsRepository } from './songs.repository';
 export class SongsDatabaseRepository implements SongsRepository {
   constructor(private readonly connection: PrismaConnection) {}
 
+  async find(userId: number) {
+    const songs = await this.connection.song.findMany({
+      where: {
+        userId,
+      },
+    });
+
+    return songs.map(
+      (song) =>
+        new SongDto(
+          song.id,
+          song.title,
+          song.artist,
+          song.album,
+          song.year,
+          song.bucketKey,
+          song.wasParsed,
+          song.userId,
+        ),
+    );
+  }
+
   async findById(songId: number): Promise<SongDto | null> {
     const data = await this.connection.song.findUnique({
       where: {
@@ -23,6 +45,7 @@ export class SongsDatabaseRepository implements SongsRepository {
       data.artist,
       data.album,
       data.year,
+      data.bucketKey,
       data.wasParsed,
       data.userId,
     );
@@ -42,6 +65,7 @@ export class SongsDatabaseRepository implements SongsRepository {
       song.artist,
       song.album,
       song.year,
+      `${id}-${song.title}.mp3`,
       false,
       userId,
     );
@@ -51,6 +75,17 @@ export class SongsDatabaseRepository implements SongsRepository {
     await this.connection.song.update({
       data: {
         wasParsed: true,
+      },
+      where: {
+        id: songId,
+      },
+    });
+  }
+
+  async updateBucketKey(songId: number, bucketKey: string) {
+    await this.connection.song.update({
+      data: {
+        bucketKey,
       },
       where: {
         id: songId,

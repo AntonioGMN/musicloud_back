@@ -55,4 +55,10 @@ export class SongsController {
 
     return new StreamableFile(file);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  async getAllUserSongs(@Request() req: AuthorizedRequest) {
+    return this.songsService.find(req.user.userId);
+  }
 }

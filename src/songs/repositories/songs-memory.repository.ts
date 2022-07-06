@@ -13,6 +13,10 @@ export class SongsMemoryRepository implements SongsRepository {
     return this.songs.find((song) => song.id === songId);
   }
 
+  async find(userId: number): Promise<SongDto[]> {
+    return this.songs.filter((song) => song.userId === userId);
+  }
+
   async create(song: Song, userId: number) {
     const id = Date.now();
     const songDto = new SongDto(
@@ -21,6 +25,7 @@ export class SongsMemoryRepository implements SongsRepository {
       song.artist,
       song.album,
       song.year,
+      `${id}-${song.title}.mp3`,
       false,
       userId,
     );
@@ -33,6 +38,11 @@ export class SongsMemoryRepository implements SongsRepository {
   async updateSongParseStatus(songId: number) {
     const updatedSong = await this.findById(songId);
     updatedSong.wasParsed = true;
+  }
+
+  async updateBucketKey(songId: number, bucketKey: string) {
+    const updatedSong = await this.findById(songId);
+    updatedSong.bucketKey = bucketKey;
   }
 
   resetDatabase() {

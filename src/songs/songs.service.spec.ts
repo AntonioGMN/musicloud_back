@@ -32,6 +32,16 @@ describe('SongsService', () => {
     expect(service).toBeDefined();
   });
 
+  it('should return all user songs', async () => {
+    const userId = 1;
+    const songTitle = 'mysong';
+    const song = new Song(songTitle);
+    await database.create(song, userId);
+
+    const songs = await service.find(userId);
+    expect(songs.length).toEqual(1);
+  });
+
   it('should create a valid song', async () => {
     const userId = 1;
     const filename = 'mysong.mp3';
@@ -42,7 +52,7 @@ describe('SongsService', () => {
     const fileDto = new FileDto(filename, mimetype, buffer);
     const songDto = await service.upload(userId, fileDto);
     const songFile = await storage.getFile(
-      storage.getFilePath(songDto.getFileName()),
+      storage.getFilePath(songDto.bucketKey),
     );
 
     expect(songDto.title.includes('.mp3')).toBeFalsy();
@@ -72,11 +82,11 @@ describe('SongsService', () => {
     const songDto = await database.create(song, userId);
 
     await database.updateSongParseStatus(songDto.id);
-    await storage.saveFile(songDto.getFileName(), buffer);
+    await storage.saveFile(songDto.bucketKey, buffer);
 
     const { file, filename } = await service.stream(userId, songDto.id);
     expect(file).toBeDefined();
-    expect(filename).toEqual(songDto.getFileName());
+    expect(filename).toEqual(songDto.bucketKey);
   });
 
   it('should not stream a non existing song', async () => {

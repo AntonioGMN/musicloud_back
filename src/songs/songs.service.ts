@@ -12,6 +12,10 @@ export class SongsService {
     private readonly storageProvider: StorageProvider,
   ) {}
 
+  async find(userId: number) {
+    return this.songsRepository.find(userId);
+  }
+
   async upload(userId: number, songFile: FileDto) {
     const { filename, mimetype, buffer } = songFile;
     const songTitle = filename.split('.').at(0);
@@ -27,7 +31,7 @@ export class SongsService {
     }
 
     const songDto = await this.songsRepository.create(song, userId);
-    await this.storageProvider.saveFile(songDto.getFileName(), buffer);
+    await this.storageProvider.saveFile(songDto.bucketKey, buffer);
 
     return songDto;
   }
@@ -50,7 +54,7 @@ export class SongsService {
       );
     }
 
-    const filename = song.getFileName();
+    const filename = song.bucketKey;
     const file = await this.storageProvider.getFileAsReadable(filename);
 
     return {
