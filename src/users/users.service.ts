@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PlaylistsRepository } from 'src/playlists/repositories/playlist.repository';
 import { SignUpDto } from '../dto/sign-up.dto';
 import { UserDto } from '../dto/user.dto';
 import { DomainError } from '../entities/domain-error';
@@ -10,7 +11,7 @@ import { UsersRepository } from './repositories/users.repository';
 export class UsersService {
   constructor(
     private readonly usersRepository: UsersRepository,
-    private readonly hashProvider: HashProvider,
+    private readonly hashProvider: HashProvider, //private readonly playlistRepository: PlaylistsRepository,
   ) {}
 
   async signUp(signUpDto: SignUpDto) {
@@ -27,7 +28,7 @@ export class UsersService {
     }
 
     user.password = await this.hashProvider.hash(user.password);
-    await this.usersRepository.create(user);
+    const user2 = await this.usersRepository.create(user);
   }
 
   async findByEmail(email: string): Promise<UserDto | null> {
